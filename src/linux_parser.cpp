@@ -121,13 +121,14 @@ long LinuxParser::UpTime() {
 
 // Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() {
+  vector<string> cpu_utilization = LinuxParser::CpuUtilization();
   long user, nice, system, irq, softirq, steal;
-  user = stol(LinuxParser::cpu_utilization[kUser_]);
-  nice = stol(LinuxParser::cpu_utilization[kNice_]);
-  system = stol(LinuxParser::cpu_utilization[kSystem_]);
-  irq = stol(LinuxParser::cpu_utilization[kIRQ_]);
-  softirq = stol(LinuxParser::cpu_utilization[kSoftIRQ_]);
-  steal = stol(LinuxParser::cpu_utilization[kSteal_]);
+  user = stol(cpu_utilization[kUser_]);
+  nice = stol(cpu_utilization[kNice_]);
+  system = stol(cpu_utilization[kSystem_]);
+  irq = stol(cpu_utilization[kIRQ_]);
+  softirq = stol(cpu_utilization[kSoftIRQ_]);
+  steal = stol(cpu_utilization[kSteal_]);
   return LinuxParser::IdleJiffies() + user + nice + system + irq + softirq + steal;
 }
 
@@ -157,8 +158,9 @@ long LinuxParser::ActiveJiffies() {
 
 // Read and return the number of idle jiffies for the system
 long LinuxParser::IdleJiffies() { 
-  long idle = stol(LinuxParser::cpu_utilization[kIdle_]);
-  long iowait = stol(LinuxParser::cpu_utilization[kIOwait_]);
+  vector<string> cpu_utilization = LinuxParser::CpuUtilization();
+  long idle = stol(cpu_utilization[kIdle_]);
+  long iowait = stol(cpu_utilization[kIOwait_]);
   return idle + iowait; 
 }
 
@@ -166,6 +168,7 @@ long LinuxParser::IdleJiffies() {
 vector<string> LinuxParser::CpuUtilization() {
   string line{};
   string token{};
+  vector<string> tokens{}; 
   std::ifstream filestream(kProcDirectory + kStatFilename);
   if (filestream.is_open()) {
     int i=0;
@@ -173,10 +176,10 @@ vector<string> LinuxParser::CpuUtilization() {
     std::stringstream stream(line);
     while(getline(stream, token, ' ')) {
       if (i==0) { i++; } // Skip the first token
-      else { LinuxParser::cpu_utilization.push_back(token); }
+      else { tokens.push_back(token); }
     }
   }
-  return LinuxParser::cpu_utilization;
+  return tokens;
 }
 
 // Read and return the total number of processes
