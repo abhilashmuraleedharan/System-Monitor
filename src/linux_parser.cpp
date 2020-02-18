@@ -191,12 +191,12 @@ int LinuxParser::RunningProcesses() {
 
 // Read and return the command associated with a process
 string LinuxParser::Command(int pid) {
-  string command;
+  string command{};
   std::ifstream stream(kProcDirectory + "/" + to_string(pid) + kCmdlineFilename);
   if (stream.is_open()) {
     std::getline(stream, command);
-    return command;
   }
+  return command;
 }
 
 // Read and return the memory used by a process
@@ -213,7 +213,8 @@ string LinuxParser::Uid(int pid) {
 // Read and return the user associated with a process
 string LinuxParser::User(int pid) { 
   int uid = stoi(LinuxParser::Uid(pid));
-  string user, passwd, userid, line;
+  string user{}; 
+  string passwd, userid, line;
 
   std::ifstream filestream(kPasswordPath);
   if (filestream.is_open()) {
@@ -227,6 +228,7 @@ string LinuxParser::User(int pid) {
       }
     }
   }
+  return user;
 }
 
 // Read and return the uptime of a process
@@ -266,7 +268,8 @@ int LinuxParser::ReadProcStatFile(string attribute) {
 
 // Read proc pid status file attributes
 int LinuxParser::ReadProcPidStatusFile(int pid, string attribute) {
-  string line, key, value;
+  string line, key;
+  string value{};
   std::ifstream filestream(kProcDirectory + "/" + to_string(pid) + kStatusFilename);
   if (filestream.is_open()) {
     while (std::getline(filestream, line)) {
@@ -278,4 +281,5 @@ int LinuxParser::ReadProcPidStatusFile(int pid, string attribute) {
       }
     }
   }
+  return 0;
 }
