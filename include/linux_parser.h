@@ -26,6 +26,7 @@ int TotalProcesses();
 int RunningProcesses();
 std::string OperatingSystem();
 std::string Kernel();
+int ReadProcStatFile(std::string attribute);
 
 // CPU
 enum CPUStates {

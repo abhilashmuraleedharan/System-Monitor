@@ -126,40 +126,12 @@ vector<string> LinuxParser::CpuUtilization() { return {}; }
 
 // Read and return the total number of processes
 int LinuxParser::TotalProcesses() {
-  string line{};
-  string key{};
-  string value{};
-  std::ifstream filestream(kProcDirectory + kStatFilename);
-  if (filestream.is_open()) {
-    while (std::getline(filestream, line)) {
-      std::istringstream linestream(line);
-      while (linestream >> key >> value) {
-        if (key == "processes") {
-          return stoi(value);
-        }
-      }
-    }
-  }
-  return 0;
+  return LinuxParser::ReadProcStatFile("processes");
 }
 
-// TODO: Read and return the number of running processes
+// Read and return the number of running processes
 int LinuxParser::RunningProcesses() {
-  string line{};
-  string key{};
-  string value{};
-  std::ifstream filestream(kProcDirectory + kStatFilename);
-  if (filestream.is_open()) {
-    while (std::getline(filestream, line)) {
-      std::istringstream linestream(line);
-      while (linestream >> key >> value) {
-        if (key == "procs_running") {
-          return stoi(value);
-        }
-      }
-    }
-  }
-  return 0;
+  return LinuxParser::ReadProcStatFile("procs_running");
 }
 
 // TODO: Read and return the command associated with a process
@@ -181,3 +153,22 @@ string LinuxParser::User(int pid[[maybe_unused]]) { return string(); }
 // TODO: Read and return the uptime of a process
 // REMOVE: [[maybe_unused]] once you define the function
 long LinuxParser::UpTime(int pid[[maybe_unused]]) { return 0; }
+
+// Helper function to read proc stat file attributes
+int LinuxParser::ReadProcStatFile(string attribute) {
+  string line{};
+  string key{};
+  string value{};
+  std::ifstream filestream(kProcDirectory + kStatFilename);
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      std::istringstream linestream(line);
+      while (linestream >> key >> value) {
+        if (key == attribute) {
+          return stoi(value);
+        }
+      }
+    }
+  }
+  return 0;
+}
