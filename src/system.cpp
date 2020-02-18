@@ -14,6 +14,12 @@ using std::size_t;
 using std::string;
 using std::vector;
 
+// System object's Constructor
+System::System() {
+   kernel_ = LinuxParser::Kernel();
+   system_name_ = LinuxParser::OperatingSystem();
+}
+
 // TODO: Return the system's CPU
 Processor& System::Cpu() { return cpu_; }
 
@@ -21,9 +27,7 @@ Processor& System::Cpu() { return cpu_; }
 vector<Process>& System::Processes() { return processes_; }
 
 // Return the system's kernel identifier (string)
-std::string System::Kernel() { 
-   return LinuxParser::Kernel();
-}
+std::string System::Kernel() { return kernel_; }
 
 // Return the system's memory utilization
 float System::MemoryUtilization() { 
@@ -31,9 +35,7 @@ float System::MemoryUtilization() {
 }
 
 // Return the operating system name
-std::string System::OperatingSystem() { 
-   return LinuxParser::OperatingSystem(); 
-}
+std::string System::OperatingSystem() { return system_name_; }
 
 // TODO: Return the number of processes actively running on the system
 int System::RunningProcesses() { return 0; }
