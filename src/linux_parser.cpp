@@ -1,6 +1,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <string>
+#include <sstream>
 #include <vector>
 
 #include "linux_parser.h"
@@ -10,11 +11,10 @@ using std::string;
 using std::to_string;
 using std::vector;
 
-// DONE: An example of how to read data from the filesystem
 string LinuxParser::OperatingSystem() {
-  string line;
-  string key;
-  string value;
+  string line{};
+  string key{};
+  string value{};
   std::ifstream filestream(kOSPath);
   if (filestream.is_open()) {
     while (std::getline(filestream, line)) {
@@ -33,15 +33,14 @@ string LinuxParser::OperatingSystem() {
   return value;
 }
 
-// DONE: An example of how to read data from the filesystem
 string LinuxParser::Kernel() {
-  string os, kernel;
+  string os, version, kernel;
   string line;
   std::ifstream stream(kProcDirectory + kVersionFilename);
   if (stream.is_open()) {
     std::getline(stream, line);
     std::istringstream linestream(line);
-    linestream >> os >> kernel;
+    linestream >> os >> version >> kernel;
   }
   return kernel;
 }
@@ -67,7 +66,15 @@ vector<int> LinuxParser::Pids() {
 }
 
 // TODO: Read and return the system memory utilization
-float LinuxParser::MemoryUtilization() { return 0.0; }
+float LinuxParser::MemoryUtilization() { 
+  long mem_total = 0;
+  long mem_free = 0;
+  /*
+   * Extract values
+   */
+  long total_used_memory = mem_total - mem_free;
+  return total_used_memory/(mem_total * 1.0); 
+}
 
 // TODO: Read and return the system uptime
 long LinuxParser::UpTime() { return 0; }
