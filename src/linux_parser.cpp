@@ -65,15 +65,43 @@ vector<int> LinuxParser::Pids() {
   return pids;
 }
 
-// TODO: Read and return the system memory utilization
+// Read and return the system memory utilization
 float LinuxParser::MemoryUtilization() { 
-  long mem_total = 0;
-  long mem_free = 0;
+  float mem_total = 0;
+  float mem_free = 0;
+  float total_used_mem = 0;
+  float buffers = 0;
+  float cached = 0;
+  float s_reclaimable = 0;
+  float shmem = 0;
+  float cached_mem;
+  float actual_used_mem = 0;
   /*
-   * Extract values
+   * Extract memory usage details from /proc/meminfo 
    */
-  long total_used_memory = mem_total - mem_free;
-  return total_used_memory/(mem_total * 1.0); 
+  string line{};
+  string key{};
+  string value{};
+  int counter = 0;
+  std::ifstream filestream(kProcDirectory + kMeminfoFilename);
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      std::istringstream linestream(line);
+      while (linestream >> key >> value) {
+        if (key == "MemTotal:") { mem_total = stof(value); counter++; }
+        else if (key == "MemFree:") { mem_free = stof(value); counter++; }
+        else if (key == "Buffers:") { buffers = stof(value); counter++; }
+        else if (key == "Cached:") { cached = stof(value); counter++; }
+        else if (key == "SReclaimable:") { s_reclaimable = stof(value); counter++; }
+        else if (key == "Shmem:") { shmem = stof(value); counter++; }
+      }
+      if (counter == 6) { break; } // Check and exit while if all details are obtained
+    }
+  }
+  total_used_mem = mem_total - mem_free;
+  cached_mem = cached + s_reclaimable - shmem;
+  actual_used_mem = total_used_mem - (buffers + cached_mem);
+  return actual_used_mem/(mem_total * 1.0); 
 }
 
 // TODO: Read and return the system uptime
