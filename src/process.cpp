@@ -17,8 +17,12 @@ Process::Process(int pid, string user, string command) : pid_(pid), user_(user),
 // Return this process's ID
 int Process::Pid() { return pid_; }
 
-// TODO: Return this process's CPU utilization
-float Process::CpuUtilization() { return 0; }
+// Return this process's CPU utilization
+float Process::CpuUtilization() const { 
+   long total_time = LinuxParser::ActiveJiffies(pid_);
+   long seconds = LinuxParser::UpTime() - Process::UpTime();
+   return 100 * ((total_time/sysconf(_SC_CLK_TCK))/seconds * 1.0);
+}
 
 // Return the command that generated this process
 string Process::Command() { return command_; }
@@ -32,11 +36,13 @@ string Process::Ram() {
 string Process::User() { return user_; }
 
 // Return the age of this process (in seconds)
-long int Process::UpTime() { 
+long int Process::UpTime() const { 
    return LinuxParser::UpTime(pid_); 
 }
 
 // Overload the "less than" comparison operator for Process objects
-bool Process::operator<(Process const& a) const { 
-   return (Process::CpuUtilization() < a.CpuUtilization()); 
+bool Process::operator<(const Process & a) const { 
+   float lhs_cpu = Process::CpuUtilization();
+   float rhs_cpu = a.CpuUtilization();
+   return lhs_cpu < rhs_cpu;
 }

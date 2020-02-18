@@ -20,7 +20,7 @@ System::System() {
    system_name_ = LinuxParser::OperatingSystem();
 }
 
-// TODO: Return the system's CPU
+// Return the system's CPU
 Processor& System::Cpu() { return cpu_; }
 
 // Return a container composed of the system's processes
