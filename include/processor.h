@@ -2,7 +2,7 @@
 #define PROCESSOR_H
 #include "linux_parser.h"
 
-struct Processor {
+class Processor {
  public:
   float Utilization();
 };

@@ -3,13 +3,15 @@
 #include <set>
 #include <string>
 #include <vector>
-
+#include <functional>
 #include "system.h"
 
-using std::set;
-using std::size_t;
+//using std::set;
+//using std::size_t;
 using std::string;
 using std::vector;
+using std::sort;
+using std::greater;
 
 // System object's Constructor
 System::System() {
@@ -29,6 +31,7 @@ vector<Process>& System::Processes() {
       user = LinuxParser::User(pid);
       processes_.push_back(Process(pid, user, command));
    } 
+   sort(processes_.begin(), processes_.end(), greater<Process>());
    return processes_;
 }
 

@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <iostream>
 
 #include "linux_parser.h"
 
@@ -122,26 +123,44 @@ long LinuxParser::UpTime() {
 // Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() {
   vector<string> cpu_utilization = LinuxParser::CpuUtilization();
+  std::cout << "cpu ";
+  for(string value : cpu_utilization) {
+    std::cout << value << " ";
+  }
   long user, nice, system, irq, softirq, steal;
-  user = stol(cpu_utilization[kUser_]);
-  nice = stol(cpu_utilization[kNice_]);
-  system = stol(cpu_utilization[kSystem_]);
-  irq = stol(cpu_utilization[kIRQ_]);
-  softirq = stol(cpu_utilization[kSoftIRQ_]);
-  steal = stol(cpu_utilization[kSteal_]);
+  std::cout << "kUser_: " << cpu_utilization[CPUStates::kUser_] << "\n";
+  user = stol(cpu_utilization[CPUStates::kUser_]);
+  std::cout << "kNice_: " << cpu_utilization[CPUStates::kNice_] << "\n";
+  nice = stol(cpu_utilization[CPUStates::kNice_]);
+  std::cout << "kSystem_: " << cpu_utilization[CPUStates::kSystem_] << "\n";
+  system = stol(cpu_utilization[CPUStates::kSystem_]);
+  std::cout << "kIRQ_: " << cpu_utilization[CPUStates::kIRQ_] << "\n";
+  irq = stol(cpu_utilization[CPUStates::kIRQ_]);
+  std::cout << "kSoftIRQ_: " << cpu_utilization[CPUStates::kSoftIRQ_] << "\n";
+  softirq = stol(cpu_utilization[CPUStates::kSoftIRQ_]);
+  std::cout << "kSteal_: " << cpu_utilization[CPUStates::kSteal_] << "\n";
+  steal = stol(cpu_utilization[CPUStates::kSteal_]);
   return LinuxParser::IdleJiffies() + user + nice + system + irq + softirq + steal;
 }
 
 // Read and return the number of active jiffies for a PID
 long LinuxParser::ActiveJiffies(int pid) {
+  string line{};
   string token{};
   long utime, stime, cutime, cstime;
-  vector <string> tokens;
+  vector<string> tokens;
   std::ifstream filestream(kProcDirectory + "/" + to_string(pid) + kStatFilename);
   if (filestream.is_open()) {
-    while(getline(filestream, token, ' ')) {
+    std::getline(filestream, line);
+    std::stringstream stream(line);
+    while(std::getline(stream, token, ' ')) {
       tokens.push_back(token);
     }
+    std::cout << "proc/pid/stat: \n";
+    for(string s : tokens) {
+      std::cout << s << " ";
+    }
+    std::cout << "\n";
     utime = stol(tokens[13]);
     stime = stol(tokens[14]);
     cutime = stol(tokens[15]);
@@ -159,8 +178,15 @@ long LinuxParser::ActiveJiffies() {
 // Read and return the number of idle jiffies for the system
 long LinuxParser::IdleJiffies() { 
   vector<string> cpu_utilization = LinuxParser::CpuUtilization();
-  long idle = stol(cpu_utilization[kIdle_]);
-  long iowait = stol(cpu_utilization[kIOwait_]);
+  std::cout << "IDLE cpu ";
+  for(string value : cpu_utilization) {
+    std::cout << value << " ";
+  }
+  std::cout << "\n";
+  std::cout << "kIdle_: " << cpu_utilization[CPUStates::kIdle_] << "\n";
+  long idle = stol(cpu_utilization[CPUStates::kIdle_]);
+  std::cout << "kIOwait_: " << cpu_utilization[CPUStates::kIOwait_] << "\n";
+  long iowait = stol(cpu_utilization[CPUStates::kIOwait_]);
   return idle + iowait; 
 }
 
@@ -172,9 +198,9 @@ vector<string> LinuxParser::CpuUtilization() {
   std::ifstream filestream(kProcDirectory + kStatFilename);
   if (filestream.is_open()) {
     int i=0;
-    getline(filestream, line);
+    std::getline(filestream, line);
     std::stringstream stream(line);
-    while(getline(stream, token, ' ')) {
+    while(std::getline(stream, token, ' ')) {
       if (i==0) { i++; } // Skip the first token
       else { tokens.push_back(token); }
     }
@@ -209,13 +235,13 @@ string LinuxParser::Ram(int pid) {
 }
 
 // Read and return the user ID associated with a process
-string LinuxParser::Uid(int pid) { 
-  return to_string(ReadProcPidStatusFile(pid, "Uid:"));
+int LinuxParser::Uid(int pid) { 
+  return ReadProcPidStatusFile(pid, "Uid:");
 }
 
 // Read and return the user associated with a process
 string LinuxParser::User(int pid) { 
-  int uid = stoi(LinuxParser::Uid(pid));
+  int uid = LinuxParser::Uid(pid);
   string user{}; 
   string passwd, userid, line;
 
@@ -237,13 +263,17 @@ string LinuxParser::User(int pid) {
 // Read and return the uptime of a process
 long LinuxParser::UpTime(int pid) { 
   string token{};
+  string line{};
   long clock_ticks = 0;
-  vector <string> tokens;
+  vector<string> tokens;
   std::ifstream filestream(kProcDirectory + "/" + to_string(pid) + kStatFilename);
   if (filestream.is_open()) {
-    while(getline(filestream, token, ' ')) {
+    std::getline(filestream, line);
+    std::stringstream stream(line);
+    while(std::getline(stream, token, ' ')) {
       tokens.push_back(token);
     }
+    std::cout << "clock_ticks" << tokens[21] << "\n";
     clock_ticks = stol(tokens[21]); // Extract the starttime token 
     return (clock_ticks/sysconf(_SC_CLK_TCK));  // To convert from clock ticks to seconds
   }
