@@ -229,9 +229,11 @@ string LinuxParser::User(int pid) {
     while (std::getline(filestream, line)) {
       std::replace(line.begin(), line.end(), ':', ' ');
       std::istringstream linestream(line);
-      linestream >> user >> passwd >> userid;
-      if (userid == uid) {  
-        return user;
+      while (linestream >> user >> passwd >> userid) {
+        if (userid == uid) { 
+          std::cout << "User: " << user << "\n";
+          return user; 
+        }
       }
     }
   }
