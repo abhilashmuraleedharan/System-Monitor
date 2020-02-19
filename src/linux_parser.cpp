@@ -230,10 +230,7 @@ string LinuxParser::User(int pid) {
       std::replace(line.begin(), line.end(), ':', ' ');
       std::istringstream linestream(line);
       while (linestream >> user >> passwd >> userid) {
-        if (userid == uid) { 
-          std::cout << "User: " << user << "\n";
-          return user; 
-        }
+        if (userid == uid) { return user; }
       }
     }
   }
@@ -269,9 +266,7 @@ int LinuxParser::ReadProcStatFile(string attribute) {
     while (std::getline(filestream, line)) {
       std::istringstream linestream(line);
       while (linestream >> key >> value) {
-        if (key == attribute) {
-          return stoi(value);
-        }
+        if (key == attribute) { return stoi(value); }
       }
     }
   }
@@ -287,9 +282,7 @@ int LinuxParser::ReadProcPidStatusFile(int pid, string attribute) {
     while (std::getline(filestream, line)) {
       std::istringstream linestream(line);
       while (linestream >> key >> value) {
-        if (key == attribute) {  
-          return stoi(value);
-        }
+        if (key == attribute) {  return stoi(value); }
       }
     }
   }
