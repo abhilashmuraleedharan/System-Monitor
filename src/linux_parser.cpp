@@ -123,20 +123,16 @@ long LinuxParser::UpTime() {
 // Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() {
   vector<string> cpu_utilization = LinuxParser::CpuUtilization();
-  long user, nice, system, irq, softirq, steal;
-  std::cout << "kUser_: " << cpu_utilization[CPUStates::kUser_] << "\n";
+  long user, nice, system, irq, softirq, steal, idle, iowait;
   user = stol(cpu_utilization[CPUStates::kUser_]);
-  std::cout << "kNice_: " << cpu_utilization[CPUStates::kNice_] << "\n";
   nice = stol(cpu_utilization[CPUStates::kNice_]);
-  std::cout << "kSystem_: " << cpu_utilization[CPUStates::kSystem_] << "\n";
   system = stol(cpu_utilization[CPUStates::kSystem_]);
-  std::cout << "kIRQ_: " << cpu_utilization[CPUStates::kIRQ_] << "\n";
   irq = stol(cpu_utilization[CPUStates::kIRQ_]);
-  std::cout << "kSoftIRQ_: " << cpu_utilization[CPUStates::kSoftIRQ_] << "\n";
   softirq = stol(cpu_utilization[CPUStates::kSoftIRQ_]);
-  std::cout << "kSteal_: " << cpu_utilization[CPUStates::kSteal_] << "\n";
   steal = stol(cpu_utilization[CPUStates::kSteal_]);
-  return LinuxParser::IdleJiffies() + user + nice + system + irq + softirq + steal;
+  idle = stol(cpu_utilization[CPUStates::kIdle_]);
+  iowait = stol(cpu_utilization[CPUStates::kIOwait_]);
+  return user + nice + system + irq + softirq + steal + idle + iowait;
 }
 
 // Read and return the number of active jiffies for a PID
@@ -235,13 +231,15 @@ string LinuxParser::User(int pid) {
       std::replace(line.begin(), line.end(), ':', ' ');
       std::istringstream linestream(line);
       while (linestream >> user >> passwd >> userid) {
+        /*
         if (stoi(userid) == uid) {  
           return user;
-        }
+        }*/
+        std::cout << "user: " << user << "userid" << userid << "\n";
       }
     }
   }
-  return user;
+  return "Ayush";
 }
 
 // Read and return the uptime of a process
