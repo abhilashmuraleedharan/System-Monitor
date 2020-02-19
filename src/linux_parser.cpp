@@ -123,10 +123,6 @@ long LinuxParser::UpTime() {
 // Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() {
   vector<string> cpu_utilization = LinuxParser::CpuUtilization();
-  std::cout << "cpu ";
-  for(string value : cpu_utilization) {
-    std::cout << value << " ";
-  }
   long user, nice, system, irq, softirq, steal;
   std::cout << "kUser_: " << cpu_utilization[CPUStates::kUser_] << "\n";
   user = stol(cpu_utilization[CPUStates::kUser_]);
@@ -152,15 +148,10 @@ long LinuxParser::ActiveJiffies(int pid) {
   std::ifstream filestream(kProcDirectory + "/" + to_string(pid) + kStatFilename);
   if (filestream.is_open()) {
     std::getline(filestream, line);
-    std::stringstream stream(line);
-    while(std::getline(stream, token, ' ')) {
+    std::istringstream stream(line);
+    while(stream >> token) {
       tokens.push_back(token);
     }
-    std::cout << "proc/pid/stat: \n";
-    for(string s : tokens) {
-      std::cout << s << " ";
-    }
-    std::cout << "\n";
     utime = stol(tokens[13]);
     stime = stol(tokens[14]);
     cutime = stol(tokens[15]);
@@ -178,14 +169,7 @@ long LinuxParser::ActiveJiffies() {
 // Read and return the number of idle jiffies for the system
 long LinuxParser::IdleJiffies() { 
   vector<string> cpu_utilization = LinuxParser::CpuUtilization();
-  std::cout << "IDLE cpu ";
-  for(string value : cpu_utilization) {
-    std::cout << value << " ";
-  }
-  std::cout << "\n";
-  std::cout << "kIdle_: " << cpu_utilization[CPUStates::kIdle_] << "\n";
   long idle = stol(cpu_utilization[CPUStates::kIdle_]);
-  std::cout << "kIOwait_: " << cpu_utilization[CPUStates::kIOwait_] << "\n";
   long iowait = stol(cpu_utilization[CPUStates::kIOwait_]);
   return idle + iowait; 
 }
@@ -199,8 +183,8 @@ vector<string> LinuxParser::CpuUtilization() {
   if (filestream.is_open()) {
     int i=0;
     std::getline(filestream, line);
-    std::stringstream stream(line);
-    while(std::getline(stream, token, ' ')) {
+    std::istringstream stream(line);
+    while(stream >> token) {
       if (i==0) { i++; } // Skip the first token
       else { tokens.push_back(token); }
     }
@@ -269,11 +253,10 @@ long LinuxParser::UpTime(int pid) {
   std::ifstream filestream(kProcDirectory + "/" + to_string(pid) + kStatFilename);
   if (filestream.is_open()) {
     std::getline(filestream, line);
-    std::stringstream stream(line);
-    while(std::getline(stream, token, ' ')) {
+    std::istringstream stream(line);
+    while(stream >> token) {
       tokens.push_back(token);
     }
-    std::cout << "clock_ticks" << tokens[21] << "\n";
     clock_ticks = stol(tokens[21]); // Extract the starttime token 
     return (clock_ticks/sysconf(_SC_CLK_TCK));  // To convert from clock ticks to seconds
   }
