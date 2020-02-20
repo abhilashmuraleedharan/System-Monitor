@@ -1,16 +1,11 @@
 #include <unistd.h>
-#include <cstddef>
-#include <set>
 #include <string>
 #include <vector>
 #include "system.h"
 
-//using std::set;
-//using std::size_t;
 using std::string;
 using std::vector;
 using std::sort;
-using std::greater;
 
 // System object's Constructor
 System::System() {
@@ -24,7 +19,8 @@ Processor& System::Cpu() { return cpu_; }
 // Return a container composed of the system's processes
 vector<Process>& System::Processes() { 
    vector<int> pids = LinuxParser::Pids();
-   string command, user;
+   string command{};
+   string user{};
    processes_.clear();
    for(int pid : pids) {
       command = LinuxParser::Command(pid);
