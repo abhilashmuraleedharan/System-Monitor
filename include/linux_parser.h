@@ -42,6 +42,11 @@ enum CPUStates {
   kGuest_,
   kGuestNice_
 };
+extern std::vector<std::string> cpu_utilization;
+extern long idle_jiffies;
+extern long jiffies;
+extern long active_jiffies;
+void UpdateCpuUtilization();
 std::vector<std::string> CpuUtilization();
 long Jiffies();
 long ActiveJiffies();

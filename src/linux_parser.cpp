@@ -69,21 +69,12 @@ vector<int> LinuxParser::Pids() {
 
 // Read and return the system memory utilization
 float LinuxParser::MemoryUtilization() { 
-  float mem_total = 0;
-  float mem_free = 0;
-  float total_used_mem = 0;
-  float buffers = 0;
-  float cached = 0;
-  float s_reclaimable = 0;
-  float shmem = 0;
-  float cached_mem;
-  float actual_used_mem = 0;
+  float mem_total, mem_free, total_used_mem, buffers, cached;
+  float s_reclaimable, shmem, cached_mem, actual_used_mem;
   /*
    * Extract memory usage details from /proc/meminfo 
    */
-  string line{};
-  string key{};
-  string value{};
+  string line, key, value;
   int counter = 0;
   std::ifstream filestream(kProcDirectory + kMeminfoFilename);
   if (filestream.is_open()) {
@@ -97,7 +88,7 @@ float LinuxParser::MemoryUtilization() {
         else if (key == "SReclaimable:") { s_reclaimable = stof(value); counter++; }
         else if (key == "Shmem:") { shmem = stof(value); counter++; }
       }
-      if (counter == 6) { break; } // Check and exit while if all details are obtained
+      if (counter == 6) { break; } // Check and exit while loop if all details are obtained
     }
   }
   total_used_mem = mem_total - mem_free;
@@ -121,17 +112,14 @@ long LinuxParser::UpTime() {
 
 // Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() {
-  vector<string> cpu_utilization = LinuxParser::CpuUtilization();
-  long user, nice, system, irq, softirq, steal, idle, iowait;
-  user = stol(cpu_utilization[CPUStates::kUser_]);
-  nice = stol(cpu_utilization[CPUStates::kNice_]);
-  system = stol(cpu_utilization[CPUStates::kSystem_]);
-  irq = stol(cpu_utilization[CPUStates::kIRQ_]);
-  softirq = stol(cpu_utilization[CPUStates::kSoftIRQ_]);
-  steal = stol(cpu_utilization[CPUStates::kSteal_]);
-  idle = stol(cpu_utilization[CPUStates::kIdle_]);
-  iowait = stol(cpu_utilization[CPUStates::kIOwait_]);
-  return user + nice + system + irq + softirq + steal + idle + iowait;
+  long user, nice, system, irq, softirq, steal;
+  user = stol(LinuxParser::cpu_utilization[CPUStates::kUser_]);
+  nice = stol(LinuxParser::cpu_utilization[CPUStates::kNice_]);
+  system = stol(LinuxParser::cpu_utilization[CPUStates::kSystem_]);
+  irq = stol(LinuxParser::cpu_utilization[CPUStates::kIRQ_]);
+  softirq = stol(LinuxParser::cpu_utilization[CPUStates::kSoftIRQ_]);
+  steal = stol(LinuxParser::cpu_utilization[CPUStates::kSteal_]);
+  return user + nice + system + irq + softirq + steal + LinuxParser::idle_jiffies;
 }
 
 // Read and return the number of active jiffies for a PID
@@ -139,18 +127,19 @@ long LinuxParser::ActiveJiffies(int pid) {
   string line{};
   string token{};
   long utime, stime, cutime, cstime;
-  vector<string> tokens;
   std::ifstream filestream(kProcDirectory + "/" + to_string(pid) + kStatFilename);
   if (filestream.is_open()) {
     std::getline(filestream, line);
     std::istringstream stream(line);
-    while(stream >> token) {
-      tokens.push_back(token);
-    }
-    utime = stol(tokens[13]);
-    stime = stol(tokens[14]);
-    cutime = stol(tokens[15]);
-    cstime = stol(tokens[16]);
+    // Skip till utime token
+    for (int i=0; i<14; i++) { stream >> token; }
+    utime = stol(token);
+    stream >> token;
+    stime = stol(token);
+    stream >> token;
+    cutime = stol(token);
+    stream >> token;
+    cstime = stol(token);
     return utime + stime + cutime + cstime;
   }
   return 0;
@@ -158,14 +147,13 @@ long LinuxParser::ActiveJiffies(int pid) {
 
 // Read and return the number of active jiffies for the system
 long LinuxParser::ActiveJiffies() {
-  return LinuxParser::Jiffies() - LinuxParser::IdleJiffies();
+  return LinuxParser::jiffies - LinuxParser::idle_jiffies;
 }
 
 // Read and return the number of idle jiffies for the system
 long LinuxParser::IdleJiffies() { 
-  vector<string> cpu_utilization = LinuxParser::CpuUtilization();
-  long idle = stol(cpu_utilization[CPUStates::kIdle_]);
-  long iowait = stol(cpu_utilization[CPUStates::kIOwait_]);
+  long idle = stol(LinuxParser::cpu_utilization[CPUStates::kIdle_]);
+  long iowait = stol(LinuxParser::cpu_utilization[CPUStates::kIOwait_]);
   return idle + iowait; 
 }
 
@@ -185,6 +173,14 @@ vector<string> LinuxParser::CpuUtilization() {
     }
   }
   return tokens;
+}
+
+// Update CPU Utilization
+void LinuxParser::UpdateCpuUtilization() {
+  LinuxParser::cpu_utilization = LinuxParser::CpuUtilization();
+  LinuxParser::idle_jiffies = LinuxParser::IdleJiffies();
+  LinuxParser::jiffies = LinuxParser::Jiffies();
+  LinuxParser::active_jiffies = LinuxParser::ActiveJiffies();
 }
 
 // Read and return the total number of processes
@@ -241,15 +237,13 @@ long LinuxParser::UpTime(int pid) {
   string token{};
   string line{};
   long clock_ticks = 0;
-  vector<string> tokens;
   std::ifstream filestream(kProcDirectory + "/" + to_string(pid) + kStatFilename);
   if (filestream.is_open()) {
     std::getline(filestream, line);
     std::istringstream stream(line);
-    while(stream >> token) {
-      tokens.push_back(token);
-    }
-    clock_ticks = stol(tokens[21]); // Extract the starttime token 
+    // Extract only the starttime token
+    for (int i=0; i<22; i++) { stream >> token; }
+    clock_ticks = stol(token);  
     return (clock_ticks/sysconf(_SC_CLK_TCK));  // To convert from clock ticks to seconds
   }
   return 0;

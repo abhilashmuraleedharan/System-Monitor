@@ -29,7 +29,7 @@ vector<Process>& System::Processes() {
    for(int pid : pids) {
       command = LinuxParser::Command(pid);
       user = LinuxParser::User(pid);
-      processes_.push_back(Process(pid, user, command));
+      processes_.emplace_back(pid, user, command);
    } 
    sort(processes_.begin(), processes_.end(), greater<Process>());
    return processes_;
