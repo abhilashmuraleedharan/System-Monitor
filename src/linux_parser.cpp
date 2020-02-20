@@ -13,6 +13,13 @@ using std::string;
 using std::to_string;
 using std::vector;
 
+namespace LinuxParser {
+  std::vector<std::string> cpu_utilization{};
+  long idle_jiffies = 0;
+  long jiffies = 0;
+  long active_jiffies = 0;
+}
+
 string LinuxParser::OperatingSystem() {
   string line{};
   string key{};
