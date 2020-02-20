@@ -213,7 +213,7 @@ string LinuxParser::Command(int pid) {
 // Read and return the memory used by a process
 string LinuxParser::Ram(int pid) { 
   int ram = LinuxParser::ReadProcPidStatusFile(pid, "VmSize:");
-  return to_string(ram/1024.0); // To convert from KB to MB
+  return to_string(ram/1024); // To convert from KB to MB
 }
 
 // Read and return the user ID associated with a process
