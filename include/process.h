@@ -16,7 +16,7 @@ class Process {
   float CpuUtilization() const;
   std::string Ram();                       
   long int UpTime() const;                      
-  bool operator>(const Process & a) const;
+  bool operator<(const Process & a) const;
 
  private:
   int pid_;

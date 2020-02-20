@@ -3,7 +3,6 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <functional>
 #include "system.h"
 
 //using std::set;
@@ -26,12 +25,13 @@ Processor& System::Cpu() { return cpu_; }
 vector<Process>& System::Processes() { 
    vector<int> pids = LinuxParser::Pids();
    string command, user;
+   processes_.clear();
    for(int pid : pids) {
       command = LinuxParser::Command(pid);
       user = LinuxParser::User(pid);
       processes_.emplace_back(pid, user, command);
    } 
-   sort(processes_.begin(), processes_.end(), greater<Process>());
+   sort(processes_.begin(), processes_.end());
    return processes_;
 }
 
