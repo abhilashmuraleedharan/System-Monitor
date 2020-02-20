@@ -44,7 +44,7 @@ string LinuxParser::OperatingSystem() {
 
 string LinuxParser::Kernel() {
   string os, version, kernel;
-  string line;
+  string line{};
   std::ifstream stream(kProcDirectory + kVersionFilename);
   if (stream.is_open()) {
     std::getline(stream, line);
@@ -54,7 +54,7 @@ string LinuxParser::Kernel() {
   return kernel;
 }
 
-// BONUS: Update this to use std::filesystem
+// Scan the /proc directory and the get the list of Pids
 vector<int> LinuxParser::Pids() {
   vector<int> pids;
   DIR* directory = opendir(kProcDirectory.c_str());
@@ -81,7 +81,9 @@ float LinuxParser::MemoryUtilization() {
   /*
    * Extract memory usage details from /proc/meminfo 
    */
-  string line, key, value;
+  string line{};
+  string key{};
+  string value{};
   int counter = 0;
   std::ifstream filestream(kProcDirectory + kMeminfoFilename);
   if (filestream.is_open()) {
@@ -106,8 +108,9 @@ float LinuxParser::MemoryUtilization() {
 
 // Read and return the system uptime
 long LinuxParser::UpTime() {
-  string up_time, idle_time;
-  string line;
+  string up_time{};
+  string idle_time{};
+  string line{};
   std::ifstream stream(kProcDirectory + kUptimeFilename);
   if (stream.is_open()) {
     std::getline(stream, line);
@@ -138,7 +141,7 @@ long LinuxParser::ActiveJiffies(int pid) {
   if (filestream.is_open()) {
     std::getline(filestream, line);
     std::istringstream stream(line);
-    // Skip till utime token
+    // Skip tokens until utime
     for (int i=0; i<14; i++) { stream >> token; }
     utime = stol(token);
     stream >> token;
@@ -225,7 +228,9 @@ string LinuxParser::Uid(int pid) {
 string LinuxParser::User(int pid) { 
   string uid = LinuxParser::Uid(pid);
   string user{}; 
-  string passwd, userid, line;
+  string passwd{};
+  string userid{};
+  string line{};
   std::ifstream filestream(kPasswordPath);
   if (filestream.is_open()) {
     while (std::getline(filestream, line)) {
@@ -248,7 +253,7 @@ long LinuxParser::UpTime(int pid) {
   if (filestream.is_open()) {
     std::getline(filestream, line);
     std::istringstream stream(line);
-    // Extract only the starttime token
+    // Extract only the starttime token present at the 22nd position
     for (int i=0; i<22; i++) { stream >> token; }
     clock_ticks = stol(token);  
     return (clock_ticks/sysconf(_SC_CLK_TCK));  // To convert from clock ticks to seconds
@@ -275,7 +280,8 @@ int LinuxParser::ReadProcStatFile(string attribute) {
 
 // Read proc pid status file attributes
 int LinuxParser::ReadProcPidStatusFile(int pid, string attribute) {
-  string line, key;
+  string line{};
+  string key{};
   string value{};
   std::ifstream filestream(kProcDirectory + "/" + to_string(pid) + kStatusFilename);
   if (filestream.is_open()) {
