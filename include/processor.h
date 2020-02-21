@@ -4,7 +4,7 @@
 
 class Processor {
  public:
-  float Utilization();
+  double Utilization() const;
 };
 
 #endif
