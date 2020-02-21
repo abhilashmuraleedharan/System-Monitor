@@ -10,12 +10,12 @@
 class Process {
  public:
   Process(int pid, std::string user, std::string command); // Constructor
-  int Pid();                               
-  std::string User();                      
-  std::string Command();                   
-  float CpuUtilization() const;
-  std::string Ram();                       
-  long int UpTime() const;                      
+  int Pid() const;                               
+  std::string User() const;                      
+  std::string Command() const;                   
+  double CpuUtilization() const;
+  std::string Ram() const;                       
+  long UpTime() const;                      
   bool operator<(const Process & a) const;
 
  private:
