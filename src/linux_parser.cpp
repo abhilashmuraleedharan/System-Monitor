@@ -34,6 +34,7 @@ string LinuxParser::OperatingSystem() {
       while (linestream >> key >> value) {
         if (key == "PRETTY_NAME") {
           std::replace(value.begin(), value.end(), '_', ' ');
+          filestream.close();
           return value;
         }
       }
@@ -43,20 +44,23 @@ string LinuxParser::OperatingSystem() {
 }
 
 string LinuxParser::Kernel() {
-  string os, version, kernel;
+  string os{}; 
+  string version{};
+  string kernel{};
   string line{};
   std::ifstream stream(kProcDirectory + kVersionFilename);
   if (stream.is_open()) {
     std::getline(stream, line);
     std::istringstream linestream(line);
     linestream >> os >> version >> kernel;
+    stream.close();
   }
   return kernel;
 }
 
 // Scan the /proc directory and the get the list of Pids
 vector<int> LinuxParser::Pids() {
-  vector<int> pids;
+  vector<int> pids{};
   DIR* directory = opendir(kProcDirectory.c_str());
   struct dirent* file;
   while ((file = readdir(directory)) != nullptr) {
@@ -75,9 +79,16 @@ vector<int> LinuxParser::Pids() {
 }
 
 // Read and return the system memory utilization
-float LinuxParser::MemoryUtilization() { 
-  float mem_total, mem_free, total_used_mem, buffers, cached;
-  float s_reclaimable, shmem, cached_mem, actual_used_mem;
+double LinuxParser::MemoryUtilization() { 
+  double mem_total = 0; 
+  double mem_free = 0;
+  double total_used_mem = 0;
+  double buffers = 0;
+  double cached = 0;
+  double s_reclaimable = 0;
+  double shmem = 0;
+  double cached_mem = 0;
+  double actual_used_mem = 0;
   /*
    * Extract memory usage details from /proc/meminfo 
    */
@@ -99,11 +110,13 @@ float LinuxParser::MemoryUtilization() {
       }
       if (counter == 6) { break; } // Check and exit while loop if all details are obtained
     }
+    total_used_mem = mem_total - mem_free;
+    cached_mem = cached + s_reclaimable - shmem;
+    actual_used_mem = total_used_mem - (buffers + cached_mem);
+    filestream.close();
+    return actual_used_mem/mem_total; 
   }
-  total_used_mem = mem_total - mem_free;
-  cached_mem = cached + s_reclaimable - shmem;
-  actual_used_mem = total_used_mem - (buffers + cached_mem);
-  return actual_used_mem/(mem_total * 1.0); 
+  return 0;
 }
 
 // Read and return the system uptime
@@ -116,13 +129,19 @@ long LinuxParser::UpTime() {
     std::getline(stream, line);
     std::istringstream linestream(line);
     linestream >> up_time >> idle_time;
+    stream.close();
   }
   return stol(up_time);
 }
 
 // Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() {
-  long user, nice, system, irq, softirq, steal;
+  long user = 0; 
+  long nice = 0;
+  long system = 0;
+  long irq = 0;
+  long softirq = 0;
+  long steal = 0;
   user = stol(LinuxParser::cpu_utilization[CPUStates::kUser_]);
   nice = stol(LinuxParser::cpu_utilization[CPUStates::kNice_]);
   system = stol(LinuxParser::cpu_utilization[CPUStates::kSystem_]);
@@ -136,7 +155,10 @@ long LinuxParser::Jiffies() {
 long LinuxParser::ActiveJiffies(int pid) {
   string line{};
   string token{};
-  long utime, stime, cutime, cstime;
+  long utime = 0;
+  long stime = 0;
+  long cutime = 0;
+  long cstime = 0;
   std::ifstream filestream(kProcDirectory + "/" + to_string(pid) + kStatFilename);
   if (filestream.is_open()) {
     std::getline(filestream, line);
@@ -150,6 +172,7 @@ long LinuxParser::ActiveJiffies(int pid) {
     cutime = stol(token);
     stream >> token;
     cstime = stol(token);
+    filestream.close();
     return utime + stime + cutime + cstime;
   }
   return 0;
@@ -181,6 +204,7 @@ vector<string> LinuxParser::CpuUtilization() {
       if (i==0) { i++; } // Skip the first token
       else { tokens.push_back(token); }
     }
+    filestream.close();
   }
   return tokens;
 }
@@ -209,13 +233,14 @@ string LinuxParser::Command(int pid) {
   std::ifstream stream(kProcDirectory + "/" + to_string(pid) + kCmdlineFilename);
   if (stream.is_open()) {
     std::getline(stream, command);
+    stream.close();
   }
   return command;
 }
 
 // Read and return the memory used by a process
 string LinuxParser::Ram(int pid) { 
-  int ram = LinuxParser::ReadProcPidStatusFile(pid, "VmSize:");
+  int ram = LinuxParser::ReadProcPidStatusFile(pid, "VmData:");
   return to_string(ram/1024); // To convert from KB to MB
 }
 
@@ -237,7 +262,10 @@ string LinuxParser::User(int pid) {
       std::replace(line.begin(), line.end(), ':', ' ');
       std::istringstream linestream(line);
       while (linestream >> user >> passwd >> userid) {
-        if (userid == uid) { return user; }
+        if (userid == uid) { 
+          filestream.close();
+          return user; 
+        }
       }
     }
   }
@@ -256,6 +284,7 @@ long LinuxParser::UpTime(int pid) {
     // Extract only the starttime token present at the 22nd position
     for (int i=0; i<22; i++) { stream >> token; }
     clock_ticks = stol(token);  
+    filestream.close();
     return (clock_ticks/sysconf(_SC_CLK_TCK));  // To convert from clock ticks to seconds
   }
   return 0;
@@ -271,7 +300,10 @@ int LinuxParser::ReadProcStatFile(string attribute) {
     while (std::getline(filestream, line)) {
       std::istringstream linestream(line);
       while (linestream >> key >> value) {
-        if (key == attribute) { return stoi(value); }
+        if (key == attribute) { 
+          filestream.close();
+          return stoi(value); 
+        }
       }
     }
   }
@@ -288,7 +320,10 @@ int LinuxParser::ReadProcPidStatusFile(int pid, string attribute) {
     while (std::getline(filestream, line)) {
       std::istringstream linestream(line);
       while (linestream >> key >> value) {
-        if (key == attribute) {  return stoi(value); }
+        if (key == attribute) {  
+          filestream.close();
+          return stoi(value); 
+        }
       }
     }
   }
